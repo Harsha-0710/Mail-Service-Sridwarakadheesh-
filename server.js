@@ -59,10 +59,10 @@ app.post('/send-message', async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
-    res.redirect('/pages-files/contact.html?submitted=true');
+    res.redirect('https://sridwarakadheesh-investment.web.app/contact?submitted=true');
   } catch (error) {
     console.error('Email sending failed:', error);
-    res.redirect('/pages-files/contact.html?submitted=false');
+    res.redirect('https://sridwarakadheesh-investment.web.app/contact?submitted=false');
   }
 });
 
