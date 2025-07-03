@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const mongoose = require('mongoose');
 
 dotenv.config(); // Load .env file
 
@@ -11,6 +12,25 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB error:'));
+db.once('open', () => console.log('✅ MongoDB connected'));
+
+
+const contactSchema = new mongoose.Schema({
+  name: String,
+  mobile: String,
+  email: String,
+  city: String,
+  pincode: String,
+});
+
+const Contact = mongoose.model('user-detail', contactSchema);
 
 // Serve your HTML form (if it's static)
 app.use(express.static(path.join(__dirname, 'public'))); // Optional if using static HTML
@@ -59,11 +79,25 @@ app.post('/send-message', async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
-    res.redirect('https://sridwarakadheesh-investment.web.app/contact?submitted=true');
+    res.redirect('/pages-files/contact.html?submitted=true');
   } catch (error) {
     console.error('Email sending failed:', error);
-    res.redirect('https://sridwarakadheesh-investment.web.app/contact?submitted=false');
+    res.redirect('/pages-files/contact.html?submitted=false');
   }
+
+
+  try {
+    const { name, mobile, email, city, pincode } = req.body;
+
+    const newContact = new Contact({ name, mobile, email, city, pincode });
+    await newContact.save();
+
+    res.status(200).json({ message: '✅ Contact saved successfully' });
+  } catch (error) {
+    console.error('❌ Error saving contact:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+
 });
 
 const PORT = process.env.PORT || 3000;
